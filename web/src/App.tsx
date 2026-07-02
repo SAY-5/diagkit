@@ -1,18 +1,18 @@
 import { useEffect } from "react";
 import { selfCheck } from "./sim/pipeline";
+import { useDiagnosis } from "./useDiagnosis";
+import { Hero } from "./components/Hero";
 
 export default function App() {
   useEffect(() => {
     selfCheck();
   }, []);
 
+  const { bundle, ranking } = useDiagnosis(42, "payments-outage");
+
   return (
-    <main className="wrap">
-      <section className="section">
-        <p className="eyebrow">diagkit</p>
-        <h1>incident root-cause console</h1>
-        <p className="mono">pipeline online. see the console for the seeded self-check.</p>
-      </section>
-    </main>
+    <>
+      <Hero top={ranking[0]} services={bundle.services} logs={bundle.logs.length} traces={bundle.traces.length} />
+    </>
   );
 }
