@@ -1,0 +1,178 @@
+.topo-heading {
+  font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+  margin: 14px 0 16px;
+}
+
+.topo-sub {
+  color: var(--text-1);
+  max-width: 62ch;
+  margin: 0 0 44px;
+}
+
+.topo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  position: relative;
+}
+
+.topo-node {
+  position: relative;
+  padding: 20px;
+  transition: border-color 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.topo-node.in-blast {
+  border-color: rgba(255, 84, 112, 0.28);
+}
+
+.topo-node.is-culprit {
+  border-color: var(--alert);
+  box-shadow: var(--glow-alert);
+}
+
+.topo-node-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.topo-node-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-0);
+}
+
+.topo-tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: var(--text-2);
+  border: 1px solid var(--stroke);
+}
+
+.topo-tag-blast {
+  color: var(--alert-bright);
+  border-color: rgba(255, 84, 112, 0.4);
+}
+
+.topo-tag-alert {
+  color: #fff;
+  background: var(--alert);
+  border-color: var(--alert);
+}
+
+.topo-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.topo-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topo-stat-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.topo-stat-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-0);
+}
+
+.topo-sparks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.topo-spark {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topo-spark-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+
+.sparkline {
+  width: 100%;
+  height: auto;
+}
+
+.topo-edge {
+  position: absolute;
+  top: 50%;
+  right: -20px;
+  width: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.topo-edge-line {
+  position: absolute;
+  inset: 0;
+  height: 2px;
+  top: 50%;
+  background: var(--stroke-strong);
+}
+
+.topo-edge.edge-hot .topo-edge-line {
+  background: linear-gradient(90deg, var(--alert), var(--indigo));
+  box-shadow: 0 0 10px rgba(255, 84, 112, 0.6);
+  animation: pulse-edge 1.6s ease-in-out infinite;
+}
+
+.topo-edge-arrow {
+  display: none;
+}
+
+@keyframes pulse-edge {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .topo-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .topo-edge {
+    display: none;
+  }
+}
+
+@media (max-width: 540px) {
+  .topo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topo-edge.edge-hot .topo-edge-line {
+    animation: none;
+  }
+}
