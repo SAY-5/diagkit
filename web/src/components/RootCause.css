@@ -1,0 +1,200 @@
+.rc-heading {
+  font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+  margin: 14px 0 16px;
+}
+
+.rc-sub {
+  color: var(--text-1);
+  max-width: 66ch;
+  margin: 0 0 32px;
+}
+
+.rc-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 40px;
+  align-items: flex-end;
+  padding: 22px 26px;
+  margin-bottom: 36px;
+}
+
+.rc-control-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.rc-scenario-btns,
+.rc-seed {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rc-chip {
+  font-size: 0.8rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(124, 108, 255, 0.06);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.rc-chip:hover {
+  border-color: var(--stroke-strong);
+  color: var(--text-0);
+}
+
+.rc-chip.is-active {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fff;
+  box-shadow: var(--glow-indigo);
+}
+
+.rc-seed-input {
+  width: 74px;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  background: var(--bg-1);
+  color: var(--text-0);
+  font-size: 0.85rem;
+}
+
+.rc-verdict-mini {
+  margin-left: auto;
+}
+
+.rc-verdict-mini-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--alert-bright);
+}
+
+.rc-verdict-mini-score {
+  color: var(--text-2);
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.rc-list {
+  list-style: none;
+  counter-reset: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rc-card {
+  padding: 20px 22px;
+  transition: border-color 0.3s var(--ease);
+}
+
+.rc-card.is-top {
+  border-color: var(--alert);
+  box-shadow: var(--glow-alert);
+}
+
+.rc-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.rc-rank {
+  font-size: 0.85rem;
+  color: var(--text-3);
+}
+
+.rc-service {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-0);
+  flex: 1;
+}
+
+.rc-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--indigo-bright);
+}
+
+.rc-card.is-top .rc-score {
+  color: var(--alert-bright);
+}
+
+.rc-scorebar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(124, 108, 255, 0.08);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.rc-scorefill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--indigo);
+}
+
+.rc-scorefill.fill-top {
+  background: linear-gradient(90deg, var(--alert), var(--amber));
+}
+
+.rc-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 12px;
+  color: var(--text-2);
+  font-size: 0.78rem;
+}
+
+.rc-reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rc-reasons li {
+  position: relative;
+  padding-left: 18px;
+  color: var(--text-1);
+  font-size: 0.86rem;
+}
+
+.rc-reasons li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--indigo);
+}
+
+.rc-card.is-top .rc-reasons li::before {
+  background: var(--alert);
+}
+
+@media (max-width: 620px) {
+  .rc-verdict-mini {
+    margin-left: 0;
+  }
+}
