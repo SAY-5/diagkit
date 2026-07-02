@@ -93,3 +93,45 @@ func TestNoiseSignaturePresentInEveryScenario(t *testing.T) {
 		t.Fatalf("noise volume differs across scenarios: %v", counts)
 	}
 }
+
+// errorCounts tallies error spans per service for a generated scenario.
+func errorCounts(seed int64, scenario string) map[string]int {
+	b := Generate(seed, scenario)
+	out := map[string]int{}
+	for _, s := range b.Traces {
+		if s.Error {
+			out[s.Service]++
+		}
+	}
+	return out
+}
+
+func TestCascadingTimeoutCulpritIsOrders(t *testing.T) {
+	ec := errorCounts(42, "cascading-timeout")
+	// orders fails on its own; payments and db below it stay near baseline.
+	if ec["orders"] <= 5*ec["payments"] || ec["orders"] <= 5*ec["db"] {
+		t.Fatalf("orders (%d) should dominate payments (%d) and db (%d)", ec["orders"], ec["payments"], ec["db"])
+	}
+	// the failure cascades to the gateway above it
+	if ec["gateway"] < ec["orders"] {
+		t.Fatalf("gateway (%d) should inherit orders errors (%d)", ec["gateway"], ec["orders"])
+	}
+}
+
+func TestConfigRolloutCulpritIsGateway(t *testing.T) {
+	ec := errorCounts(42, "config-rollout")
+	// the edge fails alone: nothing below it is degraded
+	for _, svc := range []string{"orders", "payments", "db"} {
+		if ec["gateway"] <= 5*ec[svc] {
+			t.Fatalf("gateway (%d) should dominate %s (%d)", ec["gateway"], svc, ec[svc])
+		}
+	}
+}
+
+func TestNewScenariosAreDistinct(t *testing.T) {
+	a := serialize(t, Generate(42, "cascading-timeout"))
+	b := serialize(t, Generate(42, "config-rollout"))
+	if bytes.Equal(a, b) {
+		t.Fatal("cascading-timeout and config-rollout produced identical bundles")
+	}
+}

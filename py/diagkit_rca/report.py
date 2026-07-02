@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 
-from .analyzer import BaselineDiff, RootCause
+from .analyzer import BaselineDiff, RootCause, severity
 from .bundle import Bundle
 
 
@@ -23,6 +23,7 @@ def report_json(
         "seed": bundle.seed,
         "window": {"start_ms": bundle.window.start_ms, "end_ms": bundle.window.end_ms},
         "root_cause": ranked[0].service if ranked else None,
+        "severity": asdict(severity(bundle)),
         "ranked": [asdict(rc) for rc in ranked[:top]],
         "signatures": [
             {"template": s.template, "count": s.count, "services": s.services}
@@ -44,6 +45,12 @@ def report_markdown(
         f"Window `{bundle.window.start_ms}..{bundle.window.end_ms}`, "
         f"{len(bundle.services)} services, {len(bundle.logs)} log lines, "
         f"{len(bundle.traces)} spans, {len(bundle.signatures)} signatures."
+    )
+    sev = severity(bundle)
+    lines.append(
+        f"Severity {sev.score}/100: {sev.affected_services} of {sev.total_services} "
+        f"services affected, peak error rate {sev.peak_error_rate * 100:.0f}%, "
+        f"degraded for {sev.degraded_share * 100:.0f}% of the window."
     )
     lines.append("")
     if ranked:

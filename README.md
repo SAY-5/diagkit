@@ -44,6 +44,7 @@ Python analyzer:
 ```
 incident scenario: payments-outage (seed 42)
 window: 1700000000000..1700000600000  services=4 logs=633 traces=960 signatures=5
+severity: 50.0/100 (3/4 services affected, peak error rate 74%, degraded 90% of window)
 
 Likely root cause: payments - 1 signature(s), p95 latency spike 4.2x, error rate 74%, 99% of entry errors trace through it
 
@@ -99,7 +100,9 @@ python -m diagkit_rca recurrences             # signatures seen in 2+ incidents
 diagkit collect --out - | python -m diagkit_rca analyze -
 ```
 
-Scenarios: `payments-outage` (default), `db-slowdown`, `healthy`.
+Scenarios: `payments-outage` (default), `db-slowdown`, `cascading-timeout`,
+`config-rollout`, `healthy`. Each injects a different culprit, so the analyzer
+has something distinct to find every time.
 
 ## Development
 
@@ -125,6 +128,10 @@ analyzer, running the full pipeline by default.
 
 ## Releases
 
+- **v5.0.0** severity scoring and scenario packs: every incident gets a 0..100
+  blast-radius score (services affected x peak error rate x degraded window
+  share) in analyze and history output, plus two new seeded scenarios,
+  `cascading-timeout` (orders) and `config-rollout` (gateway).
 - **v4.0.0** multi-incident history: `diagkit archive` builds a directory store
   with an index, `history` lists past incidents with their top root cause, and
   `recurrences` ranks signatures seen across 2+ incidents.

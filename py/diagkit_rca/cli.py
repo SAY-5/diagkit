@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import click
 
-from .analyzer import BaselineDiff, RootCause, analyze, diff_baseline
+from .analyzer import BaselineDiff, RootCause, analyze, diff_baseline, severity
 from .bundle import Bundle, load_bundle
 from .history import DEFAULT_DIR, find_recurrences, load_incident, load_index
 from .report import report_json, report_markdown
@@ -70,9 +70,10 @@ def history(directory: str) -> None:
         bundle = load_incident(directory, record)
         ranked = analyze(bundle)
         top_svc = ranked[0].service if ranked else "-"
+        sev = severity(bundle)
         click.echo(
             f"  {record.id}  {record.scenario:<16} seed {record.seed:<6} "
-            f"signatures={record.signatures}  root cause: {top_svc}"
+            f"severity={sev.score:<5} root cause: {top_svc}"
         )
 
 
@@ -102,6 +103,13 @@ def format_report(
         f"window: {bundle.window.start_ms}..{bundle.window.end_ms}  "
         f"services={len(bundle.services)} logs={len(bundle.logs)} "
         f"traces={len(bundle.traces)} signatures={len(bundle.signatures)}"
+    )
+    sev = severity(bundle)
+    lines.append(
+        f"severity: {sev.score}/100 "
+        f"({sev.affected_services}/{sev.total_services} services affected, "
+        f"peak error rate {sev.peak_error_rate * 100:.0f}%, "
+        f"degraded {sev.degraded_share * 100:.0f}% of window)"
     )
     lines.append("")
 

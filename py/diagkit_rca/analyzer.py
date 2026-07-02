@@ -62,6 +62,65 @@ class BaselineDiff:
     latency_delta_x: dict[str, float] = field(default_factory=dict)
 
 
+@dataclass
+class Severity:
+    """Incident blast radius on a 0..100 scale.
+
+    The score is the product of three shares: how many services are visibly
+    failing, how high the error rate peaks, and how much of the window is
+    degraded. A quiet window scores zero.
+    """
+
+    score: float
+    affected_services: int
+    total_services: int
+    affected_share: float
+    peak_error_rate: float
+    degraded_share: float
+
+
+# A service is affected when at least this share of its spans errored, and a
+# metric bucket is degraded when some service's error rate reaches it.
+SEVERITY_ERROR_FLOOR = 0.1
+
+
+def severity(bundle: Bundle) -> Severity:
+    """Score the incident's blast radius from traces and metrics."""
+    spans: dict[str, int] = defaultdict(int)
+    errors: dict[str, int] = defaultdict(int)
+    for span in bundle.traces:
+        spans[span.service] += 1
+        if span.error:
+            errors[span.service] += 1
+    affected = sum(
+        1
+        for svc in bundle.services
+        if spans.get(svc, 0) > 0 and errors.get(svc, 0) / spans[svc] >= SEVERITY_ERROR_FLOOR
+    )
+    total = len(bundle.services)
+    affected_share = affected / total if total else 0.0
+
+    peak = 0.0
+    degraded_buckets: set[int] = set()
+    buckets = 0
+    for m in bundle.metrics:
+        buckets = max(buckets, len(m.error_rate))
+        for k, p in enumerate(m.error_rate):
+            peak = max(peak, p.value)
+            if p.value >= SEVERITY_ERROR_FLOOR:
+                degraded_buckets.add(k)
+    degraded_share = len(degraded_buckets) / buckets if buckets else 0.0
+
+    return Severity(
+        score=round(100 * affected_share * peak * degraded_share, 1),
+        affected_services=affected,
+        total_services=total,
+        affected_share=round(affected_share, 3),
+        peak_error_rate=round(peak, 3),
+        degraded_share=round(degraded_share, 3),
+    )
+
+
 def _baseline_counts(baseline: Bundle) -> dict[str, int]:
     return {sig.template: sig.count for sig in baseline.signatures}
 

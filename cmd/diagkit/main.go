@@ -30,7 +30,7 @@ commands:
 
 flags:
   --seed N        deterministic seed (default 42)
-  --scenario NAME injected fault: payments-outage, db-slowdown, healthy (default payments-outage)
+  --scenario NAME injected fault: payments-outage, db-slowdown, cascading-timeout, config-rollout, healthy (default payments-outage)
   --out FILE      output path for collect, or - for stdout (default incident-bundle.json)
   --top N         number of signatures to print (default 10)
   --format FMT    signatures output format: text or json (default text)

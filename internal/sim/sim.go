@@ -47,6 +47,22 @@ var Scenarios = map[string]Scenario{
 		ErrorBoost: 0.55,
 		Latencyx:   6.0,
 	},
+	// orders starts timing out on its own work; the slowness and errors
+	// cascade up to the gateway while payments and db stay healthy below it.
+	"cascading-timeout": {
+		Name:       "cascading-timeout",
+		Culprit:    "orders",
+		ErrorBoost: 0.6,
+		Latencyx:   5.0,
+	},
+	// a bad config lands on the gateway itself: requests fail at the edge
+	// with nothing wrong anywhere downstream.
+	"config-rollout": {
+		Name:       "config-rollout",
+		Culprit:    "gateway",
+		ErrorBoost: 0.5,
+		Latencyx:   2.5,
+	},
 	"healthy": {
 		Name:       "healthy",
 		Culprit:    "",

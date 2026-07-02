@@ -43,8 +43,9 @@ Generation is driven entirely by a seeded PRNG (`math/rand/v2` with an explicit
 `PCG` source). There is no global randomness and no wall clock in the logic, so
 the same seed and scenario always yield the same bundle. A scenario injects a
 fault: `payments-outage` degrades payments, whose errors cascade up through
-orders and gateway; `db-slowdown` does the same at the leaf; `healthy` injects
-nothing.
+orders and gateway; `db-slowdown` does the same at the leaf; `cascading-timeout`
+degrades orders in the middle of the chain; `config-rollout` fails the gateway
+alone at the edge; `healthy` injects nothing.
 
 `internal/fingerprint` normalizes each log message into a template by replacing
 volatile tokens (numbers, durations, hex, ids, quoted strings) with
