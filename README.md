@@ -43,24 +43,24 @@ Python analyzer:
 
 ```
 incident scenario: payments-outage (seed 42)
-window: 1700000000000..1700000600000  services=4 logs=617 traces=960 signatures=4
+window: 1700000000000..1700000600000  services=4 logs=633 traces=960 signatures=5
 
-Likely root cause: payments - 1 signature(s), p95 latency spike 4.2x, error rate 74%, 100% of entry errors trace through it
+Likely root cause: payments - 1 signature(s), p95 latency spike 4.2x, error rate 74%, 99% of entry errors trace through it
 
 ranked services:
-  1. payments  score=1.000
-       - 1 error signature(s) covering 181 log lines
+  1. payments  score=0.980
+       - 1 error signature(s) covering 182 log lines
        - p95 latency spike 4.2x baseline
        - error rate peaked at 74%
-       - 100% of entry errors trace through it
+       - 99% of entry errors trace through it
   2. orders    score=0.655
-       - 1 error signature(s) covering 181 log lines
+       - 2 error signature(s) covering 190 log lines
        - 100% of entry errors trace through it
-  3. gateway   score=0.655
-       - 1 error signature(s) covering 181 log lines
+  3. gateway   score=0.642
+       - 1 error signature(s) covering 184 log lines
        - 100% of entry errors trace through it
-  4. db        score=0.019
-       - 1 error signature(s) covering 4 log lines
+  4. db        score=0.022
+       - 1 error signature(s) covering 5 log lines
 ```
 
 The injected fault is a payments dependency failure. diagkit correctly names
@@ -84,6 +84,11 @@ python -m diagkit_rca analyze incident-bundle.json
 # export the report for machines or for an incident ticket
 python -m diagkit_rca analyze incident-bundle.json --format json
 python -m diagkit_rca analyze incident-bundle.json --format markdown
+
+# capture a healthy-window baseline and diff the incident against it, so
+# recurring noise (steady error signatures, normal latency) is suppressed
+diagkit collect --seed 42 --baseline
+python -m diagkit_rca analyze incident-bundle.json --baseline baseline.json
 
 # or run the full pipeline over a pipe
 diagkit collect --out - | python -m diagkit_rca analyze -
@@ -115,6 +120,9 @@ analyzer, running the full pipeline by default.
 
 ## Releases
 
+- **v3.0.0** baselines and diff: `collect --baseline` captures a healthy-window
+  bundle, `analyze --baseline` reports deviation (new and escalated signatures,
+  error-rate and latency deltas) and suppresses recurring noise.
 - **v2.0.0** report export: `analyze --format json|markdown` for machine-readable
   and ticket-ready reports, `signatures --format json` on the Go side.
 - **v1.0.0** initial release: incident collection, signature fingerprinting,

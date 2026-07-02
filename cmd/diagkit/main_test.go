@@ -46,15 +46,19 @@ func TestBuildBundleHasSignatures(t *testing.T) {
 	if len(b.Signatures) == 0 {
 		t.Fatal("expected signatures after build")
 	}
-	// The top signature under a payments outage should implicate payments.
+	// A dense signature under a payments outage should implicate payments.
+	// Cascade signatures from its callers can carry a few more lines, so look
+	// across the top three clusters rather than only the first.
 	found := false
-	for _, s := range b.Signatures[0].Services {
-		if s == "payments" {
-			found = true
+	for _, sig := range b.Signatures[:3] {
+		for _, s := range sig.Services {
+			if s == "payments" {
+				found = true
+			}
 		}
 	}
 	if !found {
-		t.Fatalf("top signature services %v, expected payments", b.Signatures[0].Services)
+		t.Fatalf("top signatures %v, expected payments among them", b.Signatures[:3])
 	}
 }
 
@@ -87,5 +91,31 @@ func TestWriteSignaturesJSON(t *testing.T) {
 	}
 	if sigs[0].Template != b.Signatures[0].Template || sigs[0].Count != b.Signatures[0].Count {
 		t.Fatalf("top signature mismatch: %+v vs %+v", sigs[0], b.Signatures[0])
+	}
+}
+
+func TestApplyBaseline(t *testing.T) {
+	f, err := parseFlags([]string{"--baseline"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f = applyBaseline(f)
+	if f.scenario != "healthy" {
+		t.Fatalf("baseline scenario = %q, want healthy", f.scenario)
+	}
+	if f.out != "baseline.json" {
+		t.Fatalf("baseline out = %q, want baseline.json", f.out)
+	}
+
+	f2, _ := parseFlags([]string{"--baseline", "--out", "custom.json"})
+	f2 = applyBaseline(f2)
+	if f2.out != "custom.json" {
+		t.Fatalf("explicit out overridden: %q", f2.out)
+	}
+
+	f3, _ := parseFlags(nil)
+	f3 = applyBaseline(f3)
+	if f3.scenario != "payments-outage" || f3.out != "incident-bundle.json" {
+		t.Fatalf("non-baseline flags changed: %+v", f3)
 	}
 }

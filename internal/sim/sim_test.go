@@ -72,3 +72,24 @@ func TestBundleShape(t *testing.T) {
 		t.Fatal("expected traces and logs")
 	}
 }
+
+func TestNoiseSignaturePresentInEveryScenario(t *testing.T) {
+	counts := map[string]int{}
+	for name := range Scenarios {
+		b := Generate(42, name)
+		n := 0
+		for _, l := range b.Logs {
+			if l.Level == "error" && l.Service == "orders" &&
+				len(l.Message) > 14 && l.Message[:14] == "config refresh" {
+				n++
+			}
+		}
+		if n == 0 {
+			t.Fatalf("scenario %s has no config-refresh noise logs", name)
+		}
+		counts[name] = n
+	}
+	if counts["healthy"] != counts["payments-outage"] {
+		t.Fatalf("noise volume differs across scenarios: %v", counts)
+	}
+}

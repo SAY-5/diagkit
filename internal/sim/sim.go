@@ -64,6 +64,7 @@ const (
 	windowSpanMs  = int64(600_000) // ten minutes
 	buckets       = 10             // metric samples per service
 	requests      = 240            // simulated requests over the window
+	noiseEvery    = 40             // cadence of the scenario-independent noise log
 )
 
 // baseLatency is the healthy p95 per service in milliseconds.
@@ -147,6 +148,18 @@ func genTracesAndLogs(rng *rand.Rand, sc Scenario, b *bundle.Bundle) {
 			} else if rng.Float64() < 0.15 {
 				b.Logs = append(b.Logs, infoLog(rng, ts, svc))
 			}
+		}
+
+		// A steady, scenario-independent noise signature: orders retries a
+		// flaky config fetch on a fixed cadence in every scenario, healthy or
+		// not. Baseline diffing exists to suppress exactly this kind of line.
+		if i%noiseEvery == 0 {
+			b.Logs = append(b.Logs, bundle.LogEntry{
+				Timestamp: ts,
+				Service:   "orders",
+				Level:     "error",
+				Message:   fmt.Sprintf("config refresh retry %d failed for key %08x", i/noiseEvery+1, rng.Uint32()),
+			})
 		}
 		_ = downstreamFailed
 	}

@@ -18,7 +18,7 @@ import (
 const usage = `diagkit - support diagnostic collector for a simulated distributed system
 
 usage:
-  diagkit collect    [--seed N] [--scenario NAME] [--out FILE]
+  diagkit collect    [--seed N] [--scenario NAME] [--out FILE] [--baseline]
   diagkit signatures [--seed N] [--scenario NAME] [--top N] [--format text|json]
 
 commands:
@@ -31,6 +31,7 @@ flags:
   --out FILE      output path for collect, or - for stdout (default incident-bundle.json)
   --top N         number of signatures to print (default 10)
   --format FMT    signatures output format: text or json (default text)
+  --baseline      collect a healthy-window bundle for baseline diffing (out defaults to baseline.json)
 `
 
 func main() {
@@ -64,8 +65,10 @@ type flags struct {
 	seed     int64
 	scenario string
 	out      string
+	outSet   bool
 	top      int
 	format   string
+	baseline bool
 }
 
 func parseFlags(args []string) (flags, error) {
@@ -97,6 +100,9 @@ func parseFlags(args []string) (flags, error) {
 			if f.out, err = next(); err != nil {
 				return f, err
 			}
+			f.outSet = true
+		case "--baseline":
+			f.baseline = true
 		case "--format":
 			if f.format, err = next(); err != nil {
 				return f, err
@@ -126,11 +132,26 @@ func buildBundle(f flags) *bundle.Bundle {
 	return b
 }
 
+// applyBaseline rewrites collect flags for baseline capture: the healthy
+// scenario over the same seed and window, written to baseline.json unless the
+// caller chose a path.
+func applyBaseline(f flags) flags {
+	if !f.baseline {
+		return f
+	}
+	f.scenario = "healthy"
+	if !f.outSet {
+		f.out = "baseline.json"
+	}
+	return f
+}
+
 func runCollect(args []string) error {
 	f, err := parseFlags(args)
 	if err != nil {
 		return err
 	}
+	f = applyBaseline(f)
 	b := buildBundle(f)
 
 	if f.out == "-" {

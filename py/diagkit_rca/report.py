@@ -10,11 +10,13 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 
-from .analyzer import RootCause
+from .analyzer import BaselineDiff, RootCause
 from .bundle import Bundle
 
 
-def report_json(bundle: Bundle, ranked: list[RootCause], top: int) -> str:
+def report_json(
+    bundle: Bundle, ranked: list[RootCause], top: int, diff: BaselineDiff | None = None
+) -> str:
     doc = {
         "schema_version": bundle.schema_version,
         "scenario": bundle.scenario,
@@ -27,10 +29,14 @@ def report_json(bundle: Bundle, ranked: list[RootCause], top: int) -> str:
             for s in bundle.signatures
         ],
     }
+    if diff is not None:
+        doc["baseline_diff"] = asdict(diff)
     return json.dumps(doc, indent=2)
 
 
-def report_markdown(bundle: Bundle, ranked: list[RootCause], top: int) -> str:
+def report_markdown(
+    bundle: Bundle, ranked: list[RootCause], top: int, diff: BaselineDiff | None = None
+) -> str:
     lines: list[str] = []
     lines.append(f"# Incident report: {bundle.scenario} (seed {bundle.seed})")
     lines.append("")
@@ -58,4 +64,24 @@ def report_markdown(bundle: Bundle, ranked: list[RootCause], top: int) -> str:
     lines.append("|-------|----------|----------|")
     for s in bundle.signatures:
         lines.append(f"| {s.count} | {', '.join(s.services)} | `{s.template}` |")
+
+    if diff is not None:
+        lines.append("")
+        lines.append(f"## Deviation from baseline ({diff.baseline_scenario})")
+        lines.append("")
+        lines.append("| Status | Count | Baseline | Template |")
+        lines.append("|--------|-------|----------|----------|")
+        for dev in diff.new + diff.escalated:
+            lines.append(
+                f"| {dev.status} | {dev.count} | {dev.baseline_count} | `{dev.template}` |"
+            )
+        lines.append("")
+        deltas = ", ".join(
+            f"{svc} +{diff.error_rate_delta[svc] * 100:.0f}pt / {diff.latency_delta_x[svc]:.1f}x"
+            for svc in sorted(diff.error_rate_delta)
+        )
+        lines.append(
+            f"Suppressed {len(diff.suppressed)} recurring baseline signature(s). "
+            f"Error-rate and latency deltas per service: {deltas}."
+        )
     return "\n".join(lines)
