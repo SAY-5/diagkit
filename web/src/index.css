@@ -67,6 +67,25 @@ a {
   font-family: var(--font-mono);
 }
 
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 50;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--indigo);
+  color: #fff;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  transition: top 0.2s var(--ease);
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--stroke);

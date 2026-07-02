@@ -17,9 +17,13 @@ export function Topology({ bundle, ranking, culprit }: Props) {
   const byService = new Map(ranking.map((r) => [r.service, r]));
   const metricByService = new Map(bundle.metrics.map((m) => [m.service, m]));
 
+  // A real fault exists only when the top service shows a genuine spike; the
+  // healthy scenario has no origin, so nothing should be marked as one.
+  const topRc = byService.get(culprit);
+  const hasFault = (topRc?.latencySpikeX ?? 1) >= 1.5 || (topRc?.errorRatePeak ?? 0) >= 0.1;
   // Depth of the culprit in the chain: services at or above it inherit the
   // cascade, which is what the animated propagation shows.
-  const culpritDepth = CHAIN.indexOf(culprit);
+  const culpritDepth = hasFault ? CHAIN.indexOf(culprit) : -1;
 
   return (
     <section className="section" id="topology" aria-labelledby="topo-title">
@@ -38,7 +42,7 @@ export function Topology({ bundle, ranking, culprit }: Props) {
           {CHAIN.map((svc, i) => {
             const rc = byService.get(svc);
             const m = metricByService.get(svc);
-            const isCulprit = svc === culprit;
+            const isCulprit = hasFault && svc === culprit;
             const inBlast = culpritDepth >= 0 && i <= culpritDepth;
             const err = m?.error_rate.map((p) => p.value) ?? [];
             const lat = m?.p95_latency_ms.map((p) => p.value) ?? [];

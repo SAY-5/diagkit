@@ -28,7 +28,7 @@ function TemplatePart({ template }: { template: string }) {
 
 export function Signatures({ bundle }: Props) {
   // Collect up to three raw error examples per top signature for the collapse
-  // demo. Examples come straight from the generated logs.
+  // demo. Examples come straight from the simulated logs.
   const topSig = bundle.signatures[0];
   const rawExamples = bundle.logs
     .filter((l) => l.level === "error" && normalize(l.message) === topSig.template)
