@@ -1,0 +1,36 @@
+:root {
+  /* Incident-command / diagnostics-console palette.
+     Signal accent is a cool indigo/violet; alert tone is a saturated red. */
+  --bg-0: #06060d;
+  --bg-1: #0b0b17;
+  --bg-2: #11121f;
+  --panel: rgba(20, 21, 38, 0.6);
+  --panel-solid: #14152a;
+  --stroke: rgba(124, 108, 255, 0.16);
+  --stroke-strong: rgba(124, 108, 255, 0.4);
+
+  --indigo: #7c6cff;
+  --indigo-bright: #9a8dff;
+  --indigo-dim: #5b4fd6;
+  --alert: #ff5470;
+  --alert-bright: #ff7d92;
+  --ok: #57e6b5;
+  --amber: #ffc15a;
+
+  --text-0: #eef0ff;
+  --text-1: #b9bce0;
+  --text-2: #7e82a8;
+  --text-3: #565a7d;
+
+  --glow-indigo: 0 0 40px rgba(124, 108, 255, 0.35);
+  --glow-alert: 0 0 34px rgba(255, 84, 112, 0.4);
+
+  --font-display: "Clash Display", "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --maxw: 1180px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
