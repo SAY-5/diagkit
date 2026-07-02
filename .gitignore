@@ -1,0 +1,14 @@
+# Go
+/diagkit
+/dist/
+*.test
+incident-bundle.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+py/build/
