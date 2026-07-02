@@ -63,12 +63,13 @@ def _metric_spikes(bundle: Bundle) -> tuple[dict[str, float], dict[str, float]]:
 def _propagation(bundle: Bundle) -> dict[str, float]:
     """Fraction of the entry service's error traces that pass through each service.
 
-    The entry service is the one that is never called by anyone. A downstream
-    service with high coverage of the entry service's failing traces is a strong
-    root-cause candidate.
+    The entry service is the one whose own spans have no caller (it sits at the
+    top of the call chain). A downstream service with high coverage of the entry
+    service's failing traces is a strong root-cause candidate.
     """
-    called_by = {s.called_by for s in bundle.traces}
-    entry_candidates = [s for s in bundle.services if s not in called_by]
+    entry_candidates = sorted(
+        {s.service for s in bundle.traces if not s.called_by}
+    )
     if entry_candidates:
         entry = entry_candidates[0]
     else:
