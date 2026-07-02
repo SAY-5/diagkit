@@ -10,6 +10,7 @@ import click
 
 from .analyzer import RootCause, analyze
 from .bundle import Bundle, load_bundle
+from .report import report_json, report_markdown
 
 
 @click.group()
@@ -20,14 +21,27 @@ def main() -> None:
 @main.command()
 @click.argument("bundle_path")
 @click.option("--top", default=4, show_default=True, help="number of ranked services to show")
-def analyze_cmd(bundle_path: str, top: int) -> None:
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["text", "json", "markdown"]),
+    default="text",
+    show_default=True,
+    help="report format",
+)
+def analyze_cmd(bundle_path: str, top: int, fmt: str) -> None:
     """Analyze an incident bundle and print the ranked root-cause report.
 
     BUNDLE_PATH is a file path, or - to read from stdin.
     """
     bundle = load_bundle(bundle_path)
     ranked = analyze(bundle)
-    click.echo(format_report(bundle, ranked, top))
+    if fmt == "json":
+        click.echo(report_json(bundle, ranked, top))
+    elif fmt == "markdown":
+        click.echo(report_markdown(bundle, ranked, top))
+    else:
+        click.echo(format_report(bundle, ranked, top))
 
 
 # Register under the name "analyze" (the function name avoids shadowing the import).

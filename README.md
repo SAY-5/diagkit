@@ -74,11 +74,16 @@ every failing request at the gateway traces through it.
 # collect a bundle to a file
 diagkit collect --seed 42 --scenario payments-outage --out incident-bundle.json
 
-# inspect the top recurring error signatures
+# inspect the top recurring error signatures (text or json)
 diagkit signatures --seed 42 --scenario payments-outage --top 5
+diagkit signatures --format json
 
 # analyze a saved bundle
 python -m diagkit_rca analyze incident-bundle.json
+
+# export the report for machines or for an incident ticket
+python -m diagkit_rca analyze incident-bundle.json --format json
+python -m diagkit_rca analyze incident-bundle.json --format markdown
 
 # or run the full pipeline over a pipe
 diagkit collect --out - | python -m diagkit_rca analyze -
@@ -107,6 +112,13 @@ docker run --rm diagkit
 
 The image builds the Go binary in one stage and ships it alongside the Python
 analyzer, running the full pipeline by default.
+
+## Releases
+
+- **v2.0.0** report export: `analyze --format json|markdown` for machine-readable
+  and ticket-ready reports, `signatures --format json` on the Go side.
+- **v1.0.0** initial release: incident collection, signature fingerprinting,
+  root-cause ranking.
 
 ## License
 

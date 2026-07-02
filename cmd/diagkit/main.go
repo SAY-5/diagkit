@@ -5,7 +5,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/SAY-5/diagkit/internal/bundle"
@@ -17,7 +19,7 @@ const usage = `diagkit - support diagnostic collector for a simulated distribute
 
 usage:
   diagkit collect    [--seed N] [--scenario NAME] [--out FILE]
-  diagkit signatures [--seed N] [--scenario NAME] [--top N]
+  diagkit signatures [--seed N] [--scenario NAME] [--top N] [--format text|json]
 
 commands:
   collect      run the simulation and write a normalized incident bundle
@@ -28,6 +30,7 @@ flags:
   --scenario NAME injected fault: payments-outage, db-slowdown, healthy (default payments-outage)
   --out FILE      output path for collect, or - for stdout (default incident-bundle.json)
   --top N         number of signatures to print (default 10)
+  --format FMT    signatures output format: text or json (default text)
 `
 
 func main() {
@@ -62,10 +65,11 @@ type flags struct {
 	scenario string
 	out      string
 	top      int
+	format   string
 }
 
 func parseFlags(args []string) (flags, error) {
-	f := flags{seed: 42, scenario: sim.DefaultScenario, out: "incident-bundle.json", top: 10}
+	f := flags{seed: 42, scenario: sim.DefaultScenario, out: "incident-bundle.json", top: 10, format: "text"}
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		next := func() (string, error) {
@@ -92,6 +96,13 @@ func parseFlags(args []string) (flags, error) {
 		case "--out":
 			if f.out, err = next(); err != nil {
 				return f, err
+			}
+		case "--format":
+			if f.format, err = next(); err != nil {
+				return f, err
+			}
+			if f.format != "text" && f.format != "json" {
+				return f, fmt.Errorf("invalid --format %q (want text or json)", f.format)
 			}
 		case "--top":
 			var v string
@@ -145,16 +156,27 @@ func runSignatures(args []string) error {
 	}
 	b := buildBundle(f)
 
-	fmt.Printf("top error signatures (scenario=%s seed=%d)\n", b.Scenario, b.Seed)
 	n := f.top
 	if n > len(b.Signatures) {
 		n = len(b.Signatures)
 	}
+	if f.format == "json" {
+		return writeSignaturesJSON(os.Stdout, b.Signatures[:n])
+	}
+	fmt.Printf("top error signatures (scenario=%s seed=%d)\n", b.Scenario, b.Seed)
 	for i := 0; i < n; i++ {
 		s := b.Signatures[i]
 		fmt.Printf("%3d  %-9s  %s\n", s.Count, joinServices(s.Services), s.Template)
 	}
 	return nil
+}
+
+// writeSignaturesJSON emits the top signature clusters as an indented JSON
+// array so other tools can consume them without parsing the text layout.
+func writeSignaturesJSON(w io.Writer, sigs []bundle.Signature) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(sigs)
 }
 
 func joinServices(svcs []string) string {
