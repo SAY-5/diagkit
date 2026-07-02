@@ -3,6 +3,7 @@ import { selfCheck } from "./sim/pipeline";
 import { useDiagnosis } from "./useDiagnosis";
 import { Hero } from "./components/Hero";
 import { Topology } from "./components/Topology";
+import { Signatures } from "./components/Signatures";
 
 export default function App() {
   useEffect(() => {
@@ -15,6 +16,7 @@ export default function App() {
     <>
       <Hero top={ranking[0]} services={bundle.services} logs={bundle.logs.length} traces={bundle.traces.length} />
       <Topology bundle={bundle} ranking={ranking} culprit={ranking[0].service} />
+      <Signatures bundle={bundle} />
     </>
   );
 }
