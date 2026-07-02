@@ -3,9 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/SAY-5/diagkit/internal/bundle"
+	"github.com/SAY-5/diagkit/internal/history"
 )
 
 func TestParseFlagsDefaults(t *testing.T) {
@@ -117,5 +120,58 @@ func TestApplyBaseline(t *testing.T) {
 	f3 = applyBaseline(f3)
 	if f3.scenario != "payments-outage" || f3.out != "incident-bundle.json" {
 		t.Fatalf("non-baseline flags changed: %+v", f3)
+	}
+}
+
+func TestParseArchiveArgs(t *testing.T) {
+	if _, _, err := parseArchiveArgs(nil); err == nil {
+		t.Fatal("expected error for missing bundle path")
+	}
+	path, dir, err := parseArchiveArgs([]string{"incident.json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if path != "incident.json" || dir != history.DefaultDir {
+		t.Fatalf("got %q %q", path, dir)
+	}
+	path, dir, err = parseArchiveArgs([]string{"-", "--dir", "store"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if path != "-" || dir != "store" {
+		t.Fatalf("got %q %q", path, dir)
+	}
+	if _, _, err := parseArchiveArgs([]string{"b.json", "--nope"}); err == nil {
+		t.Fatal("expected error for unknown flag")
+	}
+}
+
+func TestRunArchiveEndToEnd(t *testing.T) {
+	tmp := t.TempDir()
+	src := filepath.Join(tmp, "incident.json")
+	f, _ := parseFlags(nil)
+	b := buildBundle(f)
+	out, err := os.Create(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := b.Write(out); err != nil {
+		t.Fatal(err)
+	}
+	out.Close()
+
+	dir := filepath.Join(tmp, "store")
+	if err := runArchive([]string{src, "--dir", dir}); err != nil {
+		t.Fatal(err)
+	}
+	if err := runArchive([]string{src, "--dir", dir}); err != nil {
+		t.Fatal(err)
+	}
+	idx, err := history.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(idx.Incidents) != 2 {
+		t.Fatalf("archived twice, index has %d entries", len(idx.Incidents))
 	}
 }

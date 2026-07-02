@@ -90,6 +90,11 @@ python -m diagkit_rca analyze incident-bundle.json --format markdown
 diagkit collect --seed 42 --baseline
 python -m diagkit_rca analyze incident-bundle.json --baseline baseline.json
 
+# archive incidents into a history store, then mine it
+diagkit archive incident-bundle.json          # appends to diagkit-history/
+python -m diagkit_rca history                 # past incidents with top root cause
+python -m diagkit_rca recurrences             # signatures seen in 2+ incidents
+
 # or run the full pipeline over a pipe
 diagkit collect --out - | python -m diagkit_rca analyze -
 ```
@@ -120,6 +125,9 @@ analyzer, running the full pipeline by default.
 
 ## Releases
 
+- **v4.0.0** multi-incident history: `diagkit archive` builds a directory store
+  with an index, `history` lists past incidents with their top root cause, and
+  `recurrences` ranks signatures seen across 2+ incidents.
 - **v3.0.0** baselines and diff: `collect --baseline` captures a healthy-window
   bundle, `analyze --baseline` reports deviation (new and escalated signatures,
   error-rate and latency deltas) and suppresses recurring noise.

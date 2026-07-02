@@ -10,6 +10,7 @@ import click
 
 from .analyzer import BaselineDiff, RootCause, analyze, diff_baseline
 from .bundle import Bundle, load_bundle
+from .history import DEFAULT_DIR, find_recurrences, load_incident, load_index
 from .report import report_json, report_markdown
 
 
@@ -54,6 +55,42 @@ def analyze_cmd(bundle_path: str, top: int, fmt: str, baseline_path: str | None)
 
 # Register under the name "analyze" (the function name avoids shadowing the import).
 main.add_command(analyze_cmd, name="analyze")
+
+
+@main.command()
+@click.option("--dir", "directory", default=DEFAULT_DIR, show_default=True, help="history store")
+def history(directory: str) -> None:
+    """List archived incidents with their top-ranked root cause."""
+    records = load_index(directory)
+    if not records:
+        click.echo(f"no archived incidents in {directory}")
+        return
+    click.echo(f"incident history ({len(records)} archived):")
+    for record in records:
+        bundle = load_incident(directory, record)
+        ranked = analyze(bundle)
+        top_svc = ranked[0].service if ranked else "-"
+        click.echo(
+            f"  {record.id}  {record.scenario:<16} seed {record.seed:<6} "
+            f"signatures={record.signatures}  root cause: {top_svc}"
+        )
+
+
+@main.command()
+@click.option("--dir", "directory", default=DEFAULT_DIR, show_default=True, help="history store")
+@click.option("--min", "min_incidents", default=2, show_default=True, help="minimum incident count")
+def recurrences(directory: str, min_incidents: int) -> None:
+    """Signatures seen across multiple archived incidents, ranked by recurrence."""
+    recs = find_recurrences(directory, min_incidents)
+    if not recs:
+        click.echo(f"no signatures recur across {min_incidents}+ incidents in {directory}")
+        return
+    click.echo(f"recurring signatures (seen in {min_incidents}+ incidents):")
+    for r in recs:
+        click.echo(
+            f"  {len(r.incidents)} incidents  {r.total_count} total lines  "
+            f"[{','.join(r.services)}]  {r.template}"
+        )
 
 
 def format_report(

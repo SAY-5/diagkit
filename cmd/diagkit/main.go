@@ -12,6 +12,7 @@ import (
 
 	"github.com/SAY-5/diagkit/internal/bundle"
 	"github.com/SAY-5/diagkit/internal/fingerprint"
+	"github.com/SAY-5/diagkit/internal/history"
 	"github.com/SAY-5/diagkit/internal/sim"
 )
 
@@ -20,10 +21,12 @@ const usage = `diagkit - support diagnostic collector for a simulated distribute
 usage:
   diagkit collect    [--seed N] [--scenario NAME] [--out FILE] [--baseline]
   diagkit signatures [--seed N] [--scenario NAME] [--top N] [--format text|json]
+  diagkit archive <bundle> [--dir DIR]
 
 commands:
   collect      run the simulation and write a normalized incident bundle
   signatures   print the top recurring error log signatures
+  archive      copy a bundle into the incident history store and index it
 
 flags:
   --seed N        deterministic seed (default 42)
@@ -32,6 +35,7 @@ flags:
   --top N         number of signatures to print (default 10)
   --format FMT    signatures output format: text or json (default text)
   --baseline      collect a healthy-window bundle for baseline diffing (out defaults to baseline.json)
+  --dir DIR       history directory for archive (default diagkit-history)
 `
 
 func main() {
@@ -52,6 +56,8 @@ func run(args []string) error {
 		return runCollect(rest)
 	case "signatures":
 		return runSignatures(rest)
+	case "archive":
+		return runArchive(rest)
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 		return nil
@@ -198,6 +204,61 @@ func writeSignaturesJSON(w io.Writer, sigs []bundle.Signature) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(sigs)
+}
+
+// parseArchiveArgs splits the positional bundle path from the --dir option.
+func parseArchiveArgs(args []string) (path, dir string, err error) {
+	dir = history.DefaultDir
+	if len(args) == 0 {
+		return "", "", fmt.Errorf("archive needs a bundle path (or - for stdin)")
+	}
+	path = args[0]
+	rest := args[1:]
+	for i := 0; i < len(rest); i++ {
+		switch rest[i] {
+		case "--dir":
+			if i+1 >= len(rest) {
+				return "", "", fmt.Errorf("flag --dir needs a value")
+			}
+			i++
+			dir = rest[i]
+		default:
+			return "", "", fmt.Errorf("unknown flag %q", rest[i])
+		}
+	}
+	return path, dir, nil
+}
+
+func runArchive(args []string) error {
+	path, dir, err := parseArchiveArgs(args)
+	if err != nil {
+		return err
+	}
+
+	var r io.Reader = os.Stdin
+	if path != "-" {
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		r = f
+	}
+	b, err := bundle.Read(r)
+	if err != nil {
+		return err
+	}
+	if b.SchemaVersion != bundle.SchemaVersion {
+		return fmt.Errorf("unsupported bundle schema %q, expected %q", b.SchemaVersion, bundle.SchemaVersion)
+	}
+
+	e, err := history.Archive(dir, b)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "archived %s as %s (scenario=%s seed=%d signatures=%d)\n",
+		path, e.ID, e.Scenario, e.Seed, e.Signatures)
+	return nil
 }
 
 func joinServices(svcs []string) string {
